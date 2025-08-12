@@ -1,0 +1,9 @@
+{
+    "name": "slacky",
+    "version": "1.0.0",
+    "description": "Slack status to LED color mapping application",
+    "dependencies": [
+        "curl",
+        "nlohmann-json"
+    ]
+}

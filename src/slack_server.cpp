@@ -40,11 +40,39 @@ void handleRoot() {
                 "Token: " + (slackToken != "" ? "Configured" : "Not configured") + "</div>"
                 
                 "<hr>"
-                "<h2>Test User Status</h2>"
-                "<form action='/status' method='GET'>"
-                "User ID to query: <input type='text' name='user' placeholder='Enter user ID or leave empty for configured user'><br><br>"
-                "<input type='submit' value='Get Status'>"
-                "</form>"
+                "<h2>Current Slack Status</h2>"
+                "<div id='current-status'>";
+  
+  // Add current status if configured
+  if (slackToken != "" && slackUserId != "") {
+    SlackUserStatus status = fetchSlackUserStatus();
+    if (status.isValid) {
+      html += "<div style='background: #e8f5e8; padding: 15px; border-radius: 5px; border-left: 5px solid #4CAF50;'>";
+      html += "<h3 style='margin: 0; color: #2e7d32;'>✅ Status Retrieved</h3>";
+      html += "<table style='width: 100%; margin-top: 10px;'>";
+      html += "<tr><td><strong>Display Name:</strong></td><td>" + status.displayName + "</td></tr>";
+      html += "<tr><td><strong>Real Name:</strong></td><td>" + status.realName + "</td></tr>";
+      html += "<tr><td><strong>Status Text:</strong></td><td>" + (status.statusText != "" ? status.statusText : "No status") + "</td></tr>";
+      html += "<tr><td><strong>Status Emoji:</strong></td><td>" + (status.statusEmoji != "" ? status.statusEmoji : "No emoji") + "</td></tr>";
+      html += "<tr><td><strong>Is Online:</strong></td><td>" + String(status.isOnline ? "🟢 Yes" : "🔴 No") + "</td></tr>";
+      html += "</table></div>";
+    } else {
+      html += "<div style='background: #ffebee; padding: 15px; border-radius: 5px; border-left: 5px solid #f44336;'>";
+      html += "<h3 style='margin: 0; color: #c62828;'>❌ Failed to retrieve status</h3>";
+      html += "<p>Check your Slack token and user ID configuration.</p>";
+      html += "</div>";
+    }
+  } else {
+    html += "<div style='background: #fff3e0; padding: 15px; border-radius: 5px; border-left: 5px solid #ff9800;'>";
+    html += "<h3 style='margin: 0; color: #ef6c00;'>⚠️ Configuration Required</h3>";
+    html += "<p>Configure both Slack Bot Token and User ID above to see status.</p>";
+    html += "</div>";
+  }
+  
+  html += "</div>"
+       "<script>"
+       "setTimeout(function(){ location.reload(); }, 30000);" // Auto-refresh every 30 seconds
+       "</script>";
                 "</body></html>";
   server.send(200, "text/html", html);
 }

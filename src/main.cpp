@@ -1,76 +1,64 @@
 #include <Arduino.h>
-#include "slack_server.h"
-#include "slack_status.h"
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1351.h>
+#include <SPI.h>
+#include <SPIFFS.h>
 
-// External variables from slack_server.cpp
-extern String slackToken;
-extern String slackUserId;
+// Include RGB565 image headers
+#include "assets/emojis_rgb565/vacation.h"
+#include "assets/emojis_rgb565/busy_no_interrupting.h"
+#include "assets/emojis_rgb565/busy_interrupt_ok.h"
+#include "assets/emojis_rgb565/busy_interrupt_maybe.h"
+#include "assets/emojis_rgb565/busy_stay_clear.h"
 
-unsigned long lastCheck = 0;
-const unsigned long checkInterval = 60000; // 60 sec
+// Pin definitions for XIAO ESP32S3 SPI
+#define PIN_MOSI D10  // GPIO9 -> DIN (MOSI)
+#define PIN_SCLK D9   // GPIO7 -> CLK (SCK) 
+#define PIN_CS   D8   // GPIO1 -> CS
+#define PIN_DC   D7   // GPIO2 -> DC
+#define PIN_RST  D6   // GPIO3 -> RST
 
-void setup() {
-  Serial.begin(115200);
-  delay(1000);
+// Color definitions
+#define BLACK   0x0000
+#define BLUE    0x001F
+#define RED     0xF800
+#define GREEN   0x07E0
+#define WHITE   0xFFFF
 
-  Serial.println("Starting Slacky Status Monitor...");
+// OLED dimensions
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 128
 
-  // Load saved configurations
-  loadWiFiConfig();
-  loadSlackConfig();
+#define IMG_WIDTH 128
+#define IMG_HEIGHT 128
 
-  // Try to connect to saved WiFi
-  bool wifiConnected = connectToWiFi();
+
+// Create OLED object (128x128 SSD1351)
+Adafruit_SSD1351 display = Adafruit_SSD1351(SCREEN_WIDTH, SCREEN_HEIGHT, PIN_CS, PIN_DC, PIN_MOSI, PIN_SCLK, PIN_RST);
+
+
+
+static const uint16_t imageData[] PROGMEM = {};
+ 
+void setup(void) {
+  Serial.begin(9600);
+  Serial.println("ESP32 is starting up");
+ 
+  Serial.println("TFT screen initialising");
+  display.begin();
+ 
+  //Uncomment this if you want to rotate the screen
+  //display.setRotation(1);
+ 
+  //Call this to clear any previous images
+  display.fillScreen(BLACK);
   
-  if (!wifiConnected) {
-    // No WiFi credentials or connection failed - start AP mode
-    Serial.println("WiFi connection failed. Starting configuration mode...");
-    startAPMode();
-  }
-
-  // Start web server for configuration
-  startSlackServer();
-  
-  Serial.println("Setup complete!");
-  Serial.println("Configuration available at: http://192.168.4.1 (AP mode) or device IP");
+ 
+  //This function renders the image data onto the display
+  //Parameters: xPos, yPos, bitmap data, imageWidth, imageHeight
+  display.drawRGBBitmap(0, 0, busy_interrupt_maybe, BUSY_INTERRUPT_MAYBE_WIDTH, BUSY_INTERRUPT_MAYBE_HEIGHT);
+  Serial.println("Busy interrupt maybe emoji has been rendered onto screen");
 }
 
-void loop() {
-  handleSlackServer();
-  
-  // Handle DNS server if in AP mode
-  if (WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA) {
-    handleDNSServer();
-  }
 
-  // Only fetch Slack status if connected to WiFi and configured
-  if (WiFi.status() == WL_CONNECTED && millis() - lastCheck > checkInterval) {
-    lastCheck = millis();
-    
-    // Fetch complete user status information (only if token and user configured)
-    if (slackToken != "" && slackUserId != "") {
-      SlackUserStatus userStatus = fetchSlackUserStatus();
-      
-      if (userStatus.isValid) {
-        // Map status emoji to colors for display
-        String displayColor = "Red"; // Default
-        if (userStatus.statusEmoji == ":house:") {
-          displayColor = "Green"; // Working from home
-        } else if (userStatus.statusEmoji == ":palm_tree:") {
-          displayColor = "Blue"; // On vacation
-        } else if (userStatus.statusEmoji == ":spiral_calendar_pad:") {
-          displayColor = "Orange"; // In a meeting
-        } else if (userStatus.statusEmoji == ":zzz:") {
-          displayColor = "Purple"; // Away/sleeping
-        }
-        
-        Serial.println("Display Color: " + displayColor);
-        // TODO: Set OLED/LED color based on displayColor
-      } else {
-        Serial.println("Failed to fetch valid user status");
-      }
-    } else {
-      Serial.println("Slack not configured - skipping status check");
-    }
-  }
-}
+void loop() {}

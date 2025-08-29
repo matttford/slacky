@@ -10,6 +10,7 @@
 #include "assets/emojis_rgb565/busy_interrupt_ok.h"
 #include "assets/emojis_rgb565/busy_interrupt_maybe.h"
 #include "assets/emojis_rgb565/busy_stay_clear.h"
+#include "assets/emojis_rgb565/lesssgoo.h"
 
 // Pin definitions for XIAO ESP32S3 SPI
 #define PIN_MOSI D10  // GPIO9 -> DIN (MOSI)
@@ -56,7 +57,25 @@ void setup(void) {
  
   //This function renders the image data onto the display
   //Parameters: xPos, yPos, bitmap data, imageWidth, imageHeight
+  while (true) {
   display.drawRGBBitmap(0, 0, busy_interrupt_maybe, BUSY_INTERRUPT_MAYBE_WIDTH, BUSY_INTERRUPT_MAYBE_HEIGHT);
+  delay(5000);
+  display.fillScreen(BLACK);
+  display.drawRGBBitmap(0, 0, busy_interrupt_ok, BUSY_INTERRUPT_OK_WIDTH, BUSY_INTERRUPT_OK_HEIGHT);
+  delay(5000);
+  display.fillScreen(BLACK);
+  display.drawRGBBitmap(0, 0, busy_stay_clear, BUSY_STAY_CLEAR_WIDTH, BUSY_STAY_CLEAR_HEIGHT);
+  delay(5000);
+  display.fillScreen(BLACK);
+  display.drawRGBBitmap(0, 0, busy_no_interrupting, BUSY_NO_INTERRUPTING_WIDTH, BUSY_NO_INTERRUPTING_HEIGHT);
+  delay(5000);
+  display.fillScreen(BLACK);
+  display.drawRGBBitmap(0, 0, vacation, VACATION_WIDTH, VACATION_HEIGHT);
+  delay(5000);
+  display.fillScreen(BLACK);
+  display.drawRGBBitmap(0, 0, lesssgoo, LESSSGOO_WIDTH, LESSSGOO_HEIGHT);
+  delay(5000);
+  }
   Serial.println("Busy interrupt maybe emoji has been rendered onto screen");
 }
 

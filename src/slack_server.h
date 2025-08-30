@@ -15,6 +15,7 @@ void startSlackServer();
 void handleSlackServer();
 void saveSlackConfig();
 void loadSlackConfig();
+void clearAllNVSData();
 void saveWiFiConfig();
 void loadWiFiConfig();
 void handleStatusQuery();

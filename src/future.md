@@ -60,8 +60,17 @@
 
 ## Long-Term Ideas
 
-- Support multiple workspaces or accounts.
 - Show status text alongside emoji (scrolling text on OLED).
-- Add MQTT/REST API bridge for integration with home automation (e.g., smart
-  lights indicating status).
 ```
+
+
+Current Status: 
+- The Wifi and slack credentials are configurable and stored in the flash.
+- OLED display is working and able to display the RGB bitmaps.
+
+Still Needed: 
+- The OLED Should display the current status
+  - Things like: wifi connecting, wifi connected, fetching slack status, slack status fetched, error, etc.
+- Display the Slack status on the OLED display.
+ - The slack status png should be mapped to the RGB565 bitmaps.
+ - The OLED should display the slack status image and the slack status text. The text should be scrolled. 

@@ -1,26 +1,23 @@
 #include "image_display.h"
 
-// Direct mapping of status emoji text to RGB565 image files
+// Direct mapping of status emoji text to RGB565 image arrays
 const EmojiImageMap emojiImages[] = {
-  {"busy-interrupt-ok", "/src/assets/emojis_rgb565/busy-interrupt-ok.rgb565"},
-  {"busy-interrupt-maybe", "/src/assets/emojis_rgb565/busy-interrupt-maybe.rgb565"},
-  {"busy-no-interrupting", "/src/assets/emojis_rgb565/busy-no-interrupting.rgb565"},
-  {"busy-stay-clear", "/src/assets/emojis_rgb565/busy-stay-clear.rgb565"},
-  {"vacation", "/src/assets/emojis_rgb565/vacation.rgb565"}
+  {"busy-interrupt-ok", busy_interrupt_ok, BUSY_INTERRUPT_OK_WIDTH, BUSY_INTERRUPT_OK_HEIGHT},
+  {"busy-interrupt-maybe", busy_interrupt_maybe, BUSY_INTERRUPT_MAYBE_WIDTH, BUSY_INTERRUPT_MAYBE_HEIGHT},
+  {"busy-no-interrupting", busy_no_interrupting, BUSY_NO_INTERRUPTING_WIDTH, BUSY_NO_INTERRUPTING_HEIGHT},
+  {"busy-stay-clear", busy_stay_clear, BUSY_STAY_CLEAR_WIDTH, BUSY_STAY_CLEAR_HEIGHT},
+  {"vacation", vacation, VACATION_WIDTH, VACATION_HEIGHT},
+  {"lesssgoo", lesssgoo, LESSSGOO_WIDTH, LESSSGOO_HEIGHT}
 };
 
 const int numEmojiImages = sizeof(emojiImages) / sizeof(EmojiImageMap);
 
 bool initImageSystem() {
-  if (!SPIFFS.begin(true)) {
-    Serial.println("Failed to mount SPIFFS");
-    return false;
-  }
-  Serial.println("SPIFFS mounted successfully");
+  Serial.println("Image system initialized - using compiled RGB565 arrays");
   return true;
 }
 
-String getImagePath(const String& statusEmoji) {
+const EmojiImageMap* getEmojiImage(const String& statusEmoji) {
   // Remove colons and convert to lowercase for comparison
   String cleanEmoji = statusEmoji;
   cleanEmoji.replace(":", "");
@@ -28,50 +25,24 @@ String getImagePath(const String& statusEmoji) {
   
   for (int i = 0; i < numEmojiImages; i++) {
     if (cleanEmoji == emojiImages[i].emoji) {
-      return String(emojiImages[i].imagePath);
+      return &emojiImages[i];
     }
   }
-  return ""; // No image found
+  return nullptr; // No image found
 }
 
 bool displayEmojiImage(Adafruit_SSD1351& display, const String& statusEmoji) {
-  String imagePath = getImagePath(statusEmoji);
-  if (imagePath == "") {
+  const EmojiImageMap* emojiImage = getEmojiImage(statusEmoji);
+  if (emojiImage == nullptr) {
     return false; // No image for this emoji
   }
   
-  File file = SPIFFS.open(imagePath, "r");
-  if (!file) {
-    Serial.println("Failed to open: " + imagePath);
-    return false;
-  }
+  // Clear the screen first
+  display.fillScreen(0x0000);
   
-  // Verify file size (128x128x2 bytes = 32768 bytes)
-  size_t expectedSize = SCREEN_WIDTH * SCREEN_HEIGHT * 2;
-  if (file.size() != expectedSize) {
-    Serial.println("Wrong file size for: " + imagePath);
-    file.close();
-    return false;
-  }
+  // Display the RGB565 bitmap
+  display.drawRGBBitmap(0, 0, emojiImage->imageData, emojiImage->width, emojiImage->height);
   
-  // Read and display image line by line to save memory
-  uint16_t lineBuffer[SCREEN_WIDTH];
-  
-  for (int y = 0; y < SCREEN_HEIGHT; y++) {
-    size_t bytesRead = file.readBytes((char*)lineBuffer, SCREEN_WIDTH * 2);
-    if (bytesRead != SCREEN_WIDTH * 2) {
-      Serial.println("Failed to read line " + String(y));
-      file.close();
-      return false;
-    }
-    
-    // Display the line
-    for (int x = 0; x < SCREEN_WIDTH; x++) {
-      display.drawPixel(x, y, lineBuffer[x]);
-    }
-  }
-  
-  file.close();
   Serial.println("Displayed emoji image: " + statusEmoji);
   return true;
 }

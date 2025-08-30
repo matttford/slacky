@@ -1,6 +1,11 @@
 #include <Arduino.h>
 #include "slack_server.h"
 #include "slack_status.h"
+#include "oled_display.h"
+
+// External variables from slack_server.cpp
+extern String slackToken;
+extern String slackUserId;
 
 unsigned long lastCheck = 0;
 const unsigned long checkInterval = 60000; // 60 sec
@@ -9,55 +14,74 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  Serial.println("Starting Slack Status Monitor...");
+  Serial.println("Starting Slacky Status Monitor...");
 
+  // Initialize OLED display first
+  initOLED();
 
-  WiFi.begin("", "");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("\nWi-Fi connected!");
-  Serial.print("IP Address: ");
-  Serial.println(WiFi.localIP());
-
-  // Start web server for User ID input
-  startSlackServer();
-
-  // Load any saved Slack config
+  // Load saved configurations
+  loadWiFiConfig();
   loadSlackConfig();
+
+  // Try to connect to saved WiFi
+  displayWiFiConnecting();
+  bool wifiConnected = connectToWiFi();
+  
+  if (!wifiConnected) {
+    // No WiFi credentials or connection failed - start AP mode
+    Serial.println("WiFi connection failed. Starting configuration mode...");
+    startAPMode();
+    displayConfigMode();
+  } else {
+    displayConnectionStatus("WiFi OK", COLOR_GREEN);
+    delay(1000);
+  }
+
+  // Start web server for configuration
+  startSlackServer();
+  
+  Serial.println("Setup complete!");
+  Serial.println("Configuration available at: http://192.168.4.1 (AP mode) or device IP");
 }
 
 void loop() {
   handleSlackServer();
+  
+  // Handle DNS server if in AP mode
+  if (WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA) {
+    handleDNSServer();
+    
+    // Keep showing config mode on OLED
+    static unsigned long lastConfigUpdate = 0;
+    if (millis() - lastConfigUpdate > 2000) {
+      displayConfigMode();
+      lastConfigUpdate = millis();
+    }
+  }
 
-  // Periodically fetch status
+  // Only fetch Slack status if connected to WiFi and configured
   if (WiFi.status() == WL_CONNECTED && millis() - lastCheck > checkInterval) {
     lastCheck = millis();
     
-    // Fetch complete user status information
-    SlackUserStatus userStatus = fetchSlackUserStatus();
-    
-    if (userStatus.isValid) {
-      // You can also fetch status for a specific user ID like this:
-      // SlackUserStatus specificUserStatus = fetchSlackUserStatus("U1234567890");
+    // Fetch complete user status information (only if token and user configured)
+    if (slackToken != "" && slackUserId != "") {
+      Serial.println("Fetching Slack status...");
+      SlackUserStatus userStatus = fetchSlackUserStatus();
       
-      // Map status emoji to colors for display
-      String displayColor = "Red"; // Default
-      if (userStatus.statusEmoji == ":house:") {
-        displayColor = "Green"; // Working from home
-      } else if (userStatus.statusEmoji == ":palm_tree:") {
-        displayColor = "Blue"; // On vacation
-      } else if (userStatus.statusEmoji == ":spiral_calendar_pad:") {
-        displayColor = "Orange"; // In a meeting
-      } else if (userStatus.statusEmoji == ":zzz:") {
-        displayColor = "Purple"; // Away/sleeping
+      // Display status on OLED
+      displaySlackStatus(userStatus);
+      
+      if (userStatus.isValid) {
+        Serial.println("Status displayed on OLED");
+      } else {
+        Serial.println("Failed to fetch valid user status - showing error on OLED");
       }
-      
-      Serial.println("Display Color: " + displayColor);
-      // TODO: Set OLED/LED color based on displayColor
     } else {
-      Serial.println("Failed to fetch valid user status");
+      Serial.println("Slack not configured - showing config message on OLED");
+      displayConnectionStatus("Configure\nSlack", COLOR_ORANGE);
     }
   }
+  
+  // Small delay to prevent overwhelming the loop
+  delay(100);
 }

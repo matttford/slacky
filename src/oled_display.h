@@ -35,7 +35,7 @@
 void initOLED();
 void displaySlackStatus(const SlackUserStatus& status);
 void displayConnectionStatus(const String& message, uint16_t color);
-void displayConfigMode();
+void displayConfigMode(const String& ipAddress = "192.168.4.1");
 void displayWiFiConnecting();
 void displayWiFiConnected(const String& ipAddress);
 void displayAPMode(const String& apName, const String& ipAddress);

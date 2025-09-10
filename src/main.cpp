@@ -31,7 +31,8 @@ void setup() {
     // No WiFi credentials or connection failed - start AP mode
     Serial.println("WiFi connection failed. Starting configuration mode...");
     startAPMode();
-    displayConfigMode();
+    String apIP = WiFi.softAPIP().toString();
+    displayConfigMode(apIP);
   } else {
     displayConnectionStatus("WiFi OK", COLOR_GREEN);
     delay(1000);
@@ -54,7 +55,8 @@ void loop() {
     // Keep showing config mode on OLED
     static unsigned long lastConfigUpdate = 0;
     if (millis() - lastConfigUpdate > 2000) {
-      displayConfigMode();
+      String apIP = WiFi.softAPIP().toString();
+      displayConfigMode(apIP);
       lastConfigUpdate = millis();
     }
   }

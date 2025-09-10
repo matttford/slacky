@@ -70,8 +70,9 @@ void loop() {
       Serial.println("Fetching Slack status...");
       SlackUserStatus userStatus = fetchSlackUserStatus();
       
-      // Display status on OLED
-      displaySlackStatus(userStatus);
+      // Display status on OLED with IP address
+      String currentIP = WiFi.localIP().toString();
+      displaySlackStatus(userStatus, currentIP);
       
       if (userStatus.isValid) {
         Serial.println("Status displayed on OLED");

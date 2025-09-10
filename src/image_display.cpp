@@ -31,7 +31,7 @@ const EmojiImageMap* getEmojiImage(const String& statusEmoji) {
   return nullptr; // No image found
 }
 
-bool displayEmojiImage(Adafruit_SSD1351& display, const String& statusEmoji) {
+bool displayEmojiImage(Adafruit_SSD1351& display, const String& statusEmoji, uint16_t cropHeight) {
   const EmojiImageMap* emojiImage = getEmojiImage(statusEmoji);
   if (emojiImage == nullptr) {
     return false; // No image for this emoji
@@ -40,9 +40,12 @@ bool displayEmojiImage(Adafruit_SSD1351& display, const String& statusEmoji) {
   // Clear the screen first
   display.fillScreen(0x0000);
   
-  // Display the RGB565 bitmap
-  display.drawRGBBitmap(0, 0, emojiImage->imageData, emojiImage->width, emojiImage->height);
+  // Determine the height to display
+  uint16_t displayHeight = (cropHeight > 0 && cropHeight < emojiImage->height) ? cropHeight : emojiImage->height;
   
-  Serial.println("Displayed emoji image: " + statusEmoji);
+  // Display the RGB565 bitmap (cropped if needed)
+  display.drawRGBBitmap(0, 0, emojiImage->imageData, emojiImage->width, displayHeight);
+  
+  Serial.println("Displayed emoji image: " + statusEmoji + (cropHeight > 0 ? " (cropped)" : ""));
   return true;
 }

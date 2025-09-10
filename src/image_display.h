@@ -25,7 +25,7 @@ struct EmojiImageMap {
 
 // Function prototypes
 bool initImageSystem();
-bool displayEmojiImage(Adafruit_SSD1351& display, const String& statusEmoji);
+bool displayEmojiImage(Adafruit_SSD1351& display, const String& statusEmoji, uint16_t cropHeight = 0);
 const EmojiImageMap* getEmojiImage(const String& statusEmoji);
 
 #endif

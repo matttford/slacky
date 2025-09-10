@@ -33,7 +33,7 @@
 
 // Function prototypes
 void initOLED();
-void displaySlackStatus(const SlackUserStatus& status);
+void displaySlackStatus(const SlackUserStatus& status, const String& ipAddress = "");
 void displayConnectionStatus(const String& message, uint16_t color);
 void displayConfigMode(const String& ipAddress = "192.168.4.1");
 void displayWiFiConnecting();

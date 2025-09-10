@@ -73,28 +73,39 @@ void drawStatusBackground(uint16_t color) {
   display.fillRect(SCREEN_WIDTH-15, SCREEN_HEIGHT-15, 15, 15, color);
 }
 
-void displaySlackStatus(const SlackUserStatus& status) {
+void displaySlackStatus(const SlackUserStatus& status, const String& ipAddress) {
   if (!status.isValid) {
     displayConnectionStatus("No Status", COLOR_RED);
     return;
   }
   
-  // Try to display emoji image first
-  if (displayEmojiImage(display, status.statusEmoji)) {
-    // Image displayed successfully, add overlay text
+  // Try to display emoji image first (cropped to 90% height)
+  uint16_t cropHeight = (uint16_t)(SCREEN_HEIGHT * 0.9); // 90% of 128 = ~115 pixels
+  if (displayEmojiImage(display, status.statusEmoji, cropHeight)) {
+    // Image displayed successfully, add bottom status section
+    // Draw a separator line at the crop boundary
+    display.drawLine(0, cropHeight, SCREEN_WIDTH, cropHeight, COLOR_WHITE);
+    
+    // User name and status in the bottom area
     display.setTextColor(COLOR_WHITE);
     display.setTextSize(1);
-    display.setCursor(5, 8);
+    display.setCursor(5, cropHeight + 2);
     String displayName = status.displayName != "" ? status.displayName : status.realName;
     if (displayName.length() > 18) {
       displayName = displayName.substring(0, 15) + "...";
     }
     display.println(displayName);
     
-    // Online status at bottom
-    display.setCursor(5, 115);
+    // Online status and IP on last line
+    display.setCursor(5, SCREEN_HEIGHT - 8);
     display.setTextColor(status.isOnline ? COLOR_GREEN : COLOR_RED);
-    display.println(status.isOnline ? "Online" : "Offline");
+    display.print(status.isOnline ? "Online" : "Offline");
+    
+    if (ipAddress != "") {
+      display.setTextColor(COLOR_CYAN);
+      display.print(" | ");
+      display.println(ipAddress);
+    }
   } else {
     // Fallback to text/color display
     uint16_t statusColor = getStatusColor(status.statusText);
@@ -113,7 +124,7 @@ void displaySlackStatus(const SlackUserStatus& status) {
     if (status.statusEmoji != "") {
       display.setTextColor(statusColor);
       display.setTextSize(2);
-      display.setCursor(10, 40);
+      display.setCursor(10, 30);
       String emoji = status.statusEmoji;
       emoji.replace(":", "");
       display.println(emoji.substring(0, 12));
@@ -122,7 +133,7 @@ void displaySlackStatus(const SlackUserStatus& status) {
     // Display status text
     display.setTextColor(COLOR_WHITE);
     display.setTextSize(1);
-    display.setCursor(5, 70);
+    display.setCursor(5, 60);
     String statusText = status.statusText;
     if (statusText == "") {
       statusText = "No status set";
@@ -132,10 +143,20 @@ void displaySlackStatus(const SlackUserStatus& status) {
     }
     display.println(statusText);
     
-    // Online status
-    display.setCursor(5, 85);
+    // Draw separator line
+    display.drawLine(0, 90, SCREEN_WIDTH, 90, COLOR_WHITE);
+    
+    // Online status and IP at bottom
+    display.setCursor(5, 95);
     display.setTextColor(status.isOnline ? COLOR_GREEN : COLOR_RED);
-    display.println(status.isOnline ? "Online" : "Offline");
+    display.print(status.isOnline ? "Online" : "Offline");
+    
+    if (ipAddress != "") {
+      display.setTextColor(COLOR_CYAN);
+      display.setCursor(5, 107);
+      display.print("IP: ");
+      display.println(ipAddress);
+    }
   }
 }
 

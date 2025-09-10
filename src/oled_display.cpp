@@ -159,37 +159,33 @@ void displayConnectionStatus(const String& message, uint16_t color) {
   display.println(message);
 }
 
-void displayConfigMode() {
+void displayConfigMode(const String& ipAddress) {
   display.fillScreen(COLOR_BLACK);
   
-  // Pulsing border effect
-  static unsigned long lastBlink = 0;
-  static bool blinkState = false;
-  
-  if (millis() - lastBlink > 1000) {
-    blinkState = !blinkState;
-    lastBlink = millis();
-  }
-  
-  uint16_t borderColor = blinkState ? COLOR_ORANGE : COLOR_YELLOW;
+  uint16_t borderColor = COLOR_YELLOW;
   display.drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, borderColor);
   display.drawRect(1, 1, SCREEN_WIDTH-2, SCREEN_HEIGHT-2, borderColor);
   
   display.setTextColor(COLOR_YELLOW);
   display.setTextSize(2);
-  display.setCursor(15, 30);
-  display.println("CONFIG");
-  display.setCursor(25, 50);
-  display.println("MODE");
+  display.setCursor(2, 25);
+  display.println("CONFIGURE");
   
   display.setTextSize(1);
   display.setTextColor(COLOR_WHITE);
-  display.setCursor(5, 80);
-  display.println("Connect to WiFi:");
-  display.setCursor(5, 95);
+  display.setCursor(5, 58);
+  display.println("1. Connect to WiFi:");
+  display.setCursor(8, 71);
   display.println("Slacky-XXXX");
-  display.setCursor(5, 110);
-  display.println("Pass: slacky123");
+  display.setCursor(8, 84);
+  display.println("Password: slacky123");
+  
+  display.setCursor(5, 97);
+  display.println("2. Open browser:");
+  display.setTextColor(COLOR_CYAN);
+  display.setCursor(8, 110);
+  display.print("http://");
+  display.println(ipAddress);
 }
 
 void displayWiFiConnecting() {
